@@ -1,0 +1,15 @@
+# fly.toml — config for Fly.io deployment
+# `app` must be globally unique; change before first `fly launch` or let fly assign one.
+
+app = "lang-bot"
+primary_region = "iad"
+
+[build]
+
+[env]
+  GROQ_MODEL = "llama-3.3-70b-versatile"
+  GEMINI_MODEL = "gemini-2.0-flash"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
