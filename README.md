@@ -34,16 +34,19 @@ npm start
 - `/check` — проверка грамматики с разбором ошибок
 - `/clear` — сбросить состояние
 
-## Деплой на Fly.io
+## Деплой на Northflank
 
-```bash
-fly auth login              # один раз
-fly launch --no-deploy      # в первый раз — подтвердит fly.toml, создаст app
-fly secrets set TELEGRAM_TOKEN=... GROQ_API_KEY=... GEMINI_API_KEY=...
-fly deploy
-```
+1. Зарегистрироваться на https://northflank.com через GitHub.
+2. **Create project** → регион **US Central** (в EU Gemini-fallback заблокирован Google).
+3. **Create service → Combined Service → Deployment** (без HTTP-портов, polling-бот).
+4. Source: GitHub-репозиторий, branch `master`. Build: **Dockerfile** (`./Dockerfile`).
+5. План — Sandbox / `nf-compute-10` (0.1 vCPU, 256 MB).
+6. **Runtime variables**:
+   - `TELEGRAM_TOKEN`, `GROQ_API_KEY`, `GEMINI_API_KEY` — secret
+   - `GROQ_MODEL=llama-3.3-70b-versatile`, `GEMINI_MODEL=gemini-2.0-flash` — обычные
+7. **Create & deploy**. Auto-deploy на push в master включён по умолчанию.
 
-Регион в `fly.toml` стоит `iad` (US-East) — там работает и Gemini, и Groq. Для машин в EEA Gemini-fallback заблокирован Google.
+В логах должно появиться `Bot started`.
 
 ## Структура
 
