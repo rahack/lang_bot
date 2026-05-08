@@ -35,25 +35,11 @@ npm start
 - `/check` — проверка грамматики с разбором ошибок
 - `/clear` — сбросить состояние
 
-## Деплой на Northflank
-
-1. Зарегистрироваться на https://northflank.com через GitHub.
-2. **Create project** → регион **US Central** (в EU Gemini-fallback заблокирован Google).
-3. **Create service → Combined Service → Deployment** (без HTTP-портов, polling-бот).
-4. Source: GitHub-репозиторий, branch `master`. Build: **Dockerfile** (`./Dockerfile`).
-5. План — Sandbox / `nf-compute-10` (0.1 vCPU, 256 MB).
-6. **Runtime variables**:
-   - `TELEGRAM_TOKEN`, `GROQ_API_KEY`, `GEMINI_API_KEY` — secret
-   - `GROQ_MODEL=llama-3.3-70b-versatile`, `GEMINI_MODEL=gemini-2.0-flash` — обычные
-7. **Create & deploy**. Auto-deploy на push в master включён по умолчанию.
-
-В логах должно появиться `Bot started`.
-
 ## Telegram Mini App
 
-В папке `webapp/` лежит отдельный сервис: статика Mini App + REST-эндпоинт `/api/chat`. Открывается из бота через menu-button (синяя кнопка слева от поля ввода).
+В папке `webapp/` лежит отдельный сервис: статика Mini App + REST-эндпоинт `/api/chat`. Открывается из бота через menu-button (кнопка слева от поля ввода) — появляется, если в `.env` бота задан `WEB_APP_URL`.
 
-UI: переключатели режимов `translate` / `chat` / `check` сверху и окно чата под ними. Контекст диалога хранится в браузере отдельно для каждого режима (теряется при закрытии). Сервер stateless — фронт шлёт всю историю в каждом запросе. Все запросы валидируются через Telegram `initData` (HMAC от `TELEGRAM_TOKEN`).
+UI: переключатели режимов `translate` / `chat` / `check` сверху и окно чата под ними. Контекст диалога хранится в браузере отдельно для каждого режима (теряется при закрытии). Сервер stateless — фронт шлёт всю историю в каждом запросе. Запросы валидируются через Telegram `initData` (HMAC от `TELEGRAM_TOKEN`).
 
 ### Локальный запуск webapp
 
@@ -67,15 +53,9 @@ npm start              # http://localhost:3000
 
 Чтобы Telegram открыл Mini App, URL должен быть HTTPS и публичным — для разработки используй `cloudflared tunnel` / `ngrok`.
 
-### Деплой webapp на Northflank
+## Деплой
 
-Это **отдельный сервис** в том же проекте (не объединять с ботом — у бота нет HTTP-порта).
-
-1. **Create service → Combined Service → Deployment**, source — тот же репозиторий, branch `master`.
-2. Build: **Dockerfile**, путь `webapp/Dockerfile`, build context `webapp/`.
-3. **Ports**: добавить публичный HTTP-порт `3000` (Northflank выдаст HTTPS-URL вида `https://...code.run`).
-4. **Runtime variables**: `TELEGRAM_TOKEN`, `GROQ_API_KEY`, `GEMINI_API_KEY`, опционально `GROQ_MODEL` / `GEMINI_MODEL`.
-5. После деплоя скопировать публичный URL и добавить переменную `WEB_APP_URL` **в сервис бота** — на следующем рестарте бот зарегистрирует menu-button через `setChatMenuButton`.
+Production — VPS под Debian 11 (бот + webapp + nginx + Let's Encrypt). Полная пошаговая инструкция в [`DEPLOY_VPS.md`](./DEPLOY_VPS.md).
 
 ## Структура
 
