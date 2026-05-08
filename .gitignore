@@ -1,2 +1,4 @@
 /node_modules
 .env
+webapp/.tools/
+webapp/node_modules/

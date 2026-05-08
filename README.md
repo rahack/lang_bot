@@ -25,6 +25,7 @@ npm start
 | `GROQ_MODEL`      | по умолчанию `llama-3.3-70b-versatile`          | нет         |
 | `GEMINI_API_KEY`  | https://aistudio.google.com/apikey              | да          |
 | `GEMINI_MODEL`    | по умолчанию `gemini-2.0-flash`                 | нет         |
+| `WEB_APP_URL`     | публичный HTTPS-URL Mini App (см. ниже)         | нет         |
 
 ## Команды бота
 
@@ -48,13 +49,42 @@ npm start
 
 В логах должно появиться `Bot started`.
 
+## Telegram Mini App
+
+В папке `webapp/` лежит отдельный сервис: статика Mini App + REST-эндпоинт `/api/chat`. Открывается из бота через menu-button (синяя кнопка слева от поля ввода).
+
+UI: переключатели режимов `translate` / `chat` / `check` сверху и окно чата под ними. Контекст диалога хранится в браузере отдельно для каждого режима (теряется при закрытии). Сервер stateless — фронт шлёт всю историю в каждом запросе. Все запросы валидируются через Telegram `initData` (HMAC от `TELEGRAM_TOKEN`).
+
+### Локальный запуск webapp
+
+```bash
+cd webapp
+npm install
+# .env с TELEGRAM_TOKEN, GROQ_API_KEY, GEMINI_API_KEY
+# для отладки без Telegram можно SKIP_TG_AUTH=1
+npm start              # http://localhost:3000
+```
+
+Чтобы Telegram открыл Mini App, URL должен быть HTTPS и публичным — для разработки используй `cloudflared tunnel` / `ngrok`.
+
+### Деплой webapp на Northflank
+
+Это **отдельный сервис** в том же проекте (не объединять с ботом — у бота нет HTTP-порта).
+
+1. **Create service → Combined Service → Deployment**, source — тот же репозиторий, branch `master`.
+2. Build: **Dockerfile**, путь `webapp/Dockerfile`, build context `webapp/`.
+3. **Ports**: добавить публичный HTTP-порт `3000` (Northflank выдаст HTTPS-URL вида `https://...code.run`).
+4. **Runtime variables**: `TELEGRAM_TOKEN`, `GROQ_API_KEY`, `GEMINI_API_KEY`, опционально `GROQ_MODEL` / `GEMINI_MODEL`.
+5. После деплоя скопировать публичный URL и добавить переменную `WEB_APP_URL` **в сервис бота** — на следующем рестарте бот зарегистрирует menu-button через `setChatMenuButton`.
+
 ## Структура
 
 ```
-bot.js              # точка входа
+bot.js              # точка входа бота
 settings.js         # клавиатуры, меню
 llm.js              # Groq / Gemini / fallback
 commands/           # одна команда — один файл
+webapp/             # Mini App: server.js + public/* (отдельный сервис)
 ```
 
 Подробности в [CLAUDE.md](./CLAUDE.md).
